@@ -10,48 +10,72 @@ import {
   StatusBar,
 } from 'react-native';
 
+import AddAlarmScreen from './src/screens/AddAlarmScreen';
+
 type Alarm = {
   id: number;
   time: string;
   label: string;
-  days: string;
+  days: string[];
   enabled: boolean;
 };
 
 export default function App() {
+  const [showAdd, setShowAdd] = useState(false);
+
   const [alarms, setAlarms] = useState<Alarm[]>([
-    { id: 1, time: '06:00', label: 'Wake Up', days: 'Every day', enabled: true },
-    { id: 2, time: '07:30', label: 'Morning Routine', days: 'Mon - Fri', enabled: true },
-    { id: 3, time: '09:00', label: 'Reminder', days: 'Sunday', enabled: false },
+    {
+      id: 1,
+      time: '06:00',
+      label: 'Wake Up',
+      days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      enabled: true,
+    },
+    {
+      id: 2,
+      time: '07:30',
+      label: 'Morning Routine',
+      days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+      enabled: true,
+    },
   ]);
 
   const toggleAlarm = (id: number) => {
-    setAlarms(previous =>
-      previous.map(alarm =>
-        alarm.id === id
-          ? { ...alarm, enabled: !alarm.enabled }
-          : alarm
+    setAlarms(old =>
+      old.map(a =>
+        a.id === id ? { ...a, enabled: !a.enabled } : a
       )
     );
   };
 
   const deleteAlarm = (id: number) => {
-    setAlarms(previous => previous.filter(alarm => alarm.id !== id));
+    setAlarms(old => old.filter(a => a.id !== id));
   };
 
-  const addAlarm = () => {
-    const id = Date.now();
-    setAlarms(previous => [
-      ...previous,
+  const saveAlarm = (data: {
+    time: string;
+    label: string;
+    days: string[];
+  }) => {
+    setAlarms(old => [
+      ...old,
       {
-        id,
-        time: '08:00',
-        label: 'New Alarm',
-        days: 'Once',
+        id: Date.now(),
+        ...data,
         enabled: true,
       },
     ]);
+    setShowAdd(false);
   };
+
+  if (showAdd) {
+    return (
+      <AddAlarmScreen
+        onSave={saveAlarm}
+        onCancel={() => setShowAdd(false)}
+      />
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -68,14 +92,13 @@ export default function App() {
       </View>
 
       <View style={styles.clockCard}>
-        <Text style={styles.clockLabel}>NEXT ALARM</Text>
-        <Text style={styles.clockTime}>06:00 AM</Text>
-        <Text style={styles.clockDescription}>
-          Tomorrow morning · Wake up fresh
+        <Text style={styles.clockLabel}>YOUR ALARMS</Text>
+        <Text style={styles.clockTime}>
+          {alarms.filter(a => a.enabled).length}
         </Text>
-        <View style={styles.progress}>
-          <View style={styles.progressFill} />
-        </View>
+        <Text style={styles.clockDescription}>
+          Active alarms
+        </Text>
       </View>
 
       <View style={styles.sectionHeader}>
@@ -93,30 +116,57 @@ export default function App() {
               ]}>
                 {alarm.time}
               </Text>
-              <Text style={styles.alarmLabel}>{alarm.label}</Text>
-              <Text style={styles.alarmDays}>{alarm.days}</Text>
+
+              <Text style={styles.alarmLabel}>
+                {alarm.label}
+              </Text>
+
+              <Text style={styles.alarmDays}>
+                {alarm.days.length
+                  ? alarm.days.join(' · ')
+                  : 'Once'}
+              </Text>
             </View>
 
             <View style={styles.alarmActions}>
               <Switch
                 value={alarm.enabled}
                 onValueChange={() => toggleAlarm(alarm.id)}
-                trackColor={{ false: '#343442', true: '#7655F6' }}
+                trackColor={{
+                  false: '#343442',
+                  true: '#7655F6'
+                }}
                 thumbColor="#FFFFFF"
               />
-              <TouchableOpacity onPress={() => deleteAlarm(alarm.id)}>
+
+              <TouchableOpacity
+                onPress={() => deleteAlarm(alarm.id)}
+              >
                 <Text style={styles.delete}>×</Text>
               </TouchableOpacity>
             </View>
           </View>
         ))}
+
+        {alarms.length === 0 && (
+          <Text style={styles.empty}>
+            No alarms yet. Create your first alarm!
+          </Text>
+        )}
       </ScrollView>
 
-      <TouchableOpacity style={styles.addButton} onPress={addAlarm}>
-        <Text style={styles.addText}>＋  Add New Alarm</Text>
+      <TouchableOpacity
+        style={styles.addButton}
+        onPress={() => setShowAdd(true)}
+      >
+        <Text style={styles.addText}>
+          ＋ Add New Alarm
+        </Text>
       </TouchableOpacity>
 
-      <Text style={styles.footer}>DARK ALARM · YOUR TIME, YOUR LIFE</Text>
+      <Text style={styles.footer}>
+        DARK ALARM · YOUR TIME, YOUR LIFE
+      </Text>
     </View>
   );
 }
@@ -183,18 +233,6 @@ const styles = StyleSheet.create({
     color: '#A6A3B5',
     fontSize: 12,
     marginTop: 8,
-  },
-  progress: {
-    height: 5,
-    backgroundColor: '#393349',
-    borderRadius: 5,
-    marginTop: 23,
-  },
-  progressFill: {
-    width: '65%',
-    height: 5,
-    backgroundColor: '#957BFF',
-    borderRadius: 5,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -264,6 +302,11 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 15,
     fontWeight: 'bold',
+  },
+  empty: {
+    color: '#999',
+    textAlign: 'center',
+    marginTop: 30,
   },
   footer: {
     color: '#555267',
