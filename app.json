@@ -1,0 +1,18 @@
+
+{
+  "expo": {
+    "name": "Dark Alarm",
+    "slug": "dark-alarm",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "android": {
+      "package": "com.darkalarm.app",
+      "versionCode": 1
+    },
+    "plugins": [
+      "expo-notifications"
+    ]
+  }
+}
