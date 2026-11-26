@@ -7,40 +7,54 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
+  Alert,
 } from 'react-native';
+
+type Props = {
+  onSave: (alarm: {
+    time: string;
+    label: string;
+    days: string[];
+  }) => void;
+  onCancel: () => void;
+};
 
 const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-export default function AddAlarmScreen() {
+export default function AddAlarmScreen({ onSave, onCancel }: Props) {
   const [hour, setHour] = useState('06');
   const [minute, setMinute] = useState('30');
   const [label, setLabel] = useState('Wake Up');
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
 
-  const toggleDay = (day: string) => {
-    setSelectedDays(old =>
-      old.includes(day)
-        ? old.filter(item => item !== day)
-        : [...old, day]
-    );
-  };
-
   const saveAlarm = () => {
-    alert(
-      `Alarm: ${hour}:${minute}\nLabel: ${label}\nDays: ${
-        selectedDays.join(', ') || 'Once'
-      }`
-    );
+    const h = Number(hour);
+    const m = Number(minute);
+
+    if (!/^\d{1,2}$/.test(hour) || h > 23 ||
+        !/^\d{1,2}$/.test(minute) || m > 59) {
+      Alert.alert('Invalid Time', 'Please enter a valid time.');
+      return;
+    }
+
+    onSave({
+      time: `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`,
+      label: label.trim() || 'Alarm',
+      days: selectedDays,
+    });
   };
 
   return (
     <ScrollView style={styles.container}>
+      <TouchableOpacity onPress={onCancel}>
+        <Text style={styles.back}>← Back</Text>
+      </TouchableOpacity>
+
       <Text style={styles.heading}>New Alarm</Text>
-      <Text style={styles.subtitle}>CREATE YOUR PERFECT ROUTINE</Text>
+      <Text style={styles.subtitle}>CREATE YOUR ROUTINE</Text>
 
       <View style={styles.timeCard}>
         <Text style={styles.label}>ALARM TIME</Text>
-
         <View style={styles.timeRow}>
           <TextInput
             style={styles.timeInput}
@@ -48,7 +62,6 @@ export default function AddAlarmScreen() {
             onChangeText={setHour}
             keyboardType="number-pad"
             maxLength={2}
-            selectTextOnFocus
           />
           <Text style={styles.colon}>:</Text>
           <TextInput
@@ -57,7 +70,6 @@ export default function AddAlarmScreen() {
             onChangeText={setMinute}
             keyboardType="number-pad"
             maxLength={2}
-            selectTextOnFocus
           />
         </View>
       </View>
@@ -77,7 +89,11 @@ export default function AddAlarmScreen() {
         {days.map(day => (
           <TouchableOpacity
             key={day}
-            onPress={() => toggleDay(day)}
+            onPress={() => setSelectedDays(old =>
+              old.includes(day)
+                ? old.filter(item => item !== day)
+                : [...old, day]
+            )}
             style={[
               styles.day,
               selectedDays.includes(day) && styles.selectedDay,
@@ -88,10 +104,7 @@ export default function AddAlarmScreen() {
         ))}
       </View>
 
-      <TouchableOpacity
-        style={styles.saveButton}
-        onPress={saveAlarm}
-      >
+      <TouchableOpacity style={styles.saveButton} onPress={saveAlarm}>
         <Text style={styles.saveText}>Save Alarm</Text>
       </TouchableOpacity>
     </ScrollView>
@@ -105,11 +118,8 @@ const styles = StyleSheet.create({
     padding: 22,
     paddingTop: 55,
   },
-  heading: {
-    color: '#FFF',
-    fontSize: 30,
-    fontWeight: 'bold',
-  },
+  back: { color: '#A99AFF', fontSize: 16, marginBottom: 25 },
+  heading: { color: '#FFF', fontSize: 30, fontWeight: 'bold' },
   subtitle: {
     color: '#957BFF',
     fontSize: 10,
@@ -125,16 +135,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#302747',
   },
-  label: {
-    color: '#A99AFF',
-    fontSize: 11,
-    letterSpacing: 2,
-  },
-  timeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 15,
-  },
+  label: { color: '#A99AFF', fontSize: 11, letterSpacing: 2 },
+  timeRow: { flexDirection: 'row', alignItems: 'center', marginTop: 15 },
   timeInput: {
     color: '#FFF',
     fontSize: 55,
@@ -142,10 +144,7 @@ const styles = StyleSheet.create({
     minWidth: 85,
     textAlign: 'center',
   },
-  colon: {
-    color: '#957BFF',
-    fontSize: 45,
-  },
+  colon: { color: '#957BFF', fontSize: 45 },
   section: {
     color: '#FFF',
     fontSize: 17,
@@ -160,11 +159,7 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 15,
   },
-  days: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 9,
-  },
+  days: { flexDirection: 'row', flexWrap: 'wrap', gap: 9 },
   day: {
     backgroundColor: '#191925',
     width: 42,
@@ -173,13 +168,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  selectedDay: {
-    backgroundColor: '#7655F6',
-  },
-  dayText: {
-    color: '#FFF',
-    fontSize: 11,
-  },
+  selectedDay: { backgroundColor: '#7655F6' },
+  dayText: { color: '#FFF', fontSize: 11 },
   saveButton: {
     backgroundColor: '#7655F6',
     padding: 18,
@@ -188,9 +178,5 @@ const styles = StyleSheet.create({
     marginTop: 35,
     marginBottom: 35,
   },
-  saveText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
+  saveText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
 });
